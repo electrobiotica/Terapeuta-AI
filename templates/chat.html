@@ -38,154 +38,177 @@
     <div class="p-4 border-t dark:border-gray-700">
       <textarea id="logInput" rows="3" placeholder="Escribí tu reflexión…" class="w-full p-2 border rounded dark:bg-gray-900 dark:border-gray-600"></textarea>
       <button id="saveLog" class="mt-2 w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded">Guardar</button>
+      <button id="exportLog" class="mt-2 w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded">📄 Exportar PDF</button>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+      <script>
+        document.getElementById("exportLog").onclick = () => {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          const logs = JSON.parse(localStorage.getItem("terapiaLog") || "[]");
 
-<button id="exportLog" class="mt-2 w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded">📄 Exportar PDF</button>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-  document.getElementById("exportLog").onclick = () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const logs = JSON.parse(localStorage.getItem("terapiaLog") || "[]");
+          if (!logs.length) {
+            alert("No hay entradas para exportar.");
+            return;
+          }
 
-    if (!logs.length) return alert("No hay entradas para exportar.");
+          const margin = 15;
+          let y = margin;
 
-    doc.setFontSize(12);
-    let y = 10;
-    logs.forEach(e => {
-      doc.text(`📅 ${e.date}`, 10, y);
-      y += 6;
-      const lines = doc.splitTextToSize(e.text, 180);
-      doc.text(lines, 10, y);
-      y += lines.length * 6 + 4;
-      if (y > 270) {
-        doc.addPage();
-        y = 10;
-      }
-    });
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(18);
+          doc.text("📝 Bitácora Emocional – Terapeuta AI", margin, y);
+          y += 10;
+          doc.setFontSize(12);
+          doc.setTextColor(100);
+          doc.text(`📆 Exportado: ${new Date().toLocaleString()}`, margin, y);
+          y += 10;
+          doc.setDrawColor(200, 200, 200);
+          doc.line(margin, y, 195, y);
+          y += 8;
 
-    doc.save("bitacora_emocional.pdf");
-  };
-</script>
+          logs.forEach((entry, index) => {
+            const fecha = `📅 ${entry.date}`;
+            const texto = entry.text;
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 30, 30);
+            doc.text(fecha, margin, y);
+            y += 6;
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(50, 50, 50);
+            const wrapped = doc.splitTextToSize(texto, 180);
+            doc.text(wrapped, margin, y);
+            y += wrapped.length * 6 + 4;
+            doc.setDrawColor(230);
+            doc.line(margin, y, 195, y);
+            y += 8;
+            if (y > 270 && index < logs.length - 1) {
+              doc.addPage();
+              y = margin;
+            }
+          });
 
+          doc.save("bitacora_terapeuta_ai.pdf");
+        };
+      </script>
     </div>
   </div>
 
-<script>
-  const page = document.getElementById("page");
-  const chatBox = document.getElementById("chat");
-  const chatDiv = document.getElementById("chat");
-  const tipo = "humanista";
+  <script>
+    const page = document.getElementById("page");
+    const chatBox = document.getElementById("chat");
+    const chatDiv = document.getElementById("chat");
+    const tipo = "humanista";
 
-  const prompts = {
-    humanista: "Actuá como un terapeuta humanista...",
-    jung: "Actuá como un terapeuta jungiano...",
-    freud: "Actuá como un terapeuta psicoanalítico...",
-    gestalt: "Actuá como un terapeuta Gestalt..."
-  };
+    const prompts = {
+      humanista: "Actuá como un terapeuta humanista...",
+      jung: "Actuá como un terapeuta jungiano...",
+      freud: "Actuá como un terapeuta psicoanalítico...",
+      gestalt: "Actuá como un terapeuta Gestalt..."
+    };
 
-  document.addEventListener("DOMContentLoaded", () => {
-    if (!localStorage.getItem("puterInit")) {
-      alert("🔐 Para activar el chat por primera vez, se abrirá Puter en otra pestaña. Iniciá sesión y volvé acá.");
-      window.open("https://puter.com", "_blank");
-      localStorage.setItem("puterInit", "ok");
-    }
+    document.addEventListener("DOMContentLoaded", () => {
+      if (!localStorage.getItem("puterInit")) {
+        alert("🔐 Para activar el chat por primera vez, se abrirá Puter en otra pestaña. Iniciá sesión y volvé acá.");
+        window.open("https://puter.com", "_blank");
+        localStorage.setItem("puterInit", "ok");
+      }
 
-    const dark = localStorage.getItem("darkMode") === "true";
-    if (dark) {
-      page.classList.add("dark-mode");
-      chatBox.classList.add("dark-chat");
-    }
-  });
-
-  function toggleModo() {
-    const isDark = page.classList.toggle("dark-mode");
-    chatBox.classList.toggle("dark-chat", isDark);
-    localStorage.setItem("darkMode", isDark);
-  }
-
-  async function enviarMensaje() {
-    const input = document.getElementById("mensaje");
-    const texto = input.value.trim();
-    if (!texto) return;
-
-    chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
-    chatDiv.scrollTop = chatDiv.scrollHeight;
-    input.value = "";
-
-    try {
-      await new Promise(res => {
-        const wait = () => (window.puter && puter.ai?.chat) ? res() : setTimeout(wait, 50);
-        wait();
-      });
-
-      const raw = await puter.ai.chat([
-        { role: "system", content: prompts[tipo] || prompts.humanista },
-        { role: "user", content: texto }
-      ], { model: "gpt-4o" });
-
-      const respuesta = raw?.message?.content || "Sin respuesta.";
-      chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
-      chatDiv.scrollTop = chatDiv.scrollHeight;
-      autoAddRespuesta(respuesta);
-    } catch (e) {
-      chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
-      console.error(e);
-    }
-  }
-
-  const logKey  = "terapiaLog";
-  const logBtn  = document.getElementById("openLog");
-  const closeBtn= document.getElementById("closeLog");
-  const panel   = document.getElementById("logPanel");
-  const listDiv = document.getElementById("logList");
-  const inputLog= document.getElementById("logInput");
-  const saveBtn = document.getElementById("saveLog");
-
-  logBtn.onclick   = () => panel.classList.toggle("translate-x-full");
-  closeBtn.onclick = () => panel.classList.add("translate-x-full");
-
-  function loadLog() {
-    listDiv.innerHTML = "";
-    const data = JSON.parse(localStorage.getItem(logKey) || "[]");
-    if (!data.length) {
-      listDiv.innerHTML = "<p class='text-gray-500'>Sin entradas aún…</p>";
-      return;
-    }
-    data.forEach(e => {
-      listDiv.innerHTML += `
-        <details class="border rounded p-2 dark:border-gray-600">
-          <summary class="cursor-pointer font-medium">${e.date}</summary>
-          <p class="mt-1 whitespace-pre-wrap">${e.text}</p>
-        </details>`;
+      const dark = localStorage.getItem("darkMode") === "true";
+      if (dark) {
+        page.classList.add("dark-mode");
+        chatBox.classList.add("dark-chat");
+      }
     });
-  }
 
-  function addEntry(text) {
-    const data = JSON.parse(localStorage.getItem(logKey) || "[]");
-    data.unshift({ date: new Date().toLocaleString(), text });
-    localStorage.setItem(logKey, JSON.stringify(data));
-    loadLog();
-  }
+    function toggleModo() {
+      const isDark = page.classList.toggle("dark-mode");
+      chatBox.classList.toggle("dark-chat", isDark);
+      localStorage.setItem("darkMode", isDark);
+    }
 
-  saveBtn.onclick = () => {
-    const txt = inputLog.value.trim();
-    if (!txt) return;
-    addEntry(txt);
-    inputLog.value = "";
-  };
+    async function enviarMensaje() {
+      const input = document.getElementById("mensaje");
+      const texto = input.value.trim();
+      if (!texto) return;
 
-  panel.addEventListener("transitionend", () => {
-    if (!panel.classList.contains("translate-x-full")) loadLog();
-  });
+      chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+      input.value = "";
 
-  function autoAddRespuesta(texto) {
-    const data = JSON.parse(localStorage.getItem(logKey) || "[]");
-    data.unshift({ date: new Date().toLocaleString(), text: `💬 Respuesta del terapeuta:\n${texto}` });
-    localStorage.setItem(logKey, JSON.stringify(data));
-  }
-</script>
+      try {
+        await new Promise(res => {
+          const wait = () => (window.puter && puter.ai?.chat) ? res() : setTimeout(wait, 50);
+          wait();
+        });
 
-<a href="/" class="fixed bottom-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold px-4 py-2 rounded-full shadow-lg">🏠 Inicio</a>
+        const raw = await puter.ai.chat([
+          { role: "system", content: prompts[tipo] || prompts.humanista },
+          { role: "user", content: texto }
+        ], { model: "gpt-4o" });
 
+        const respuesta = raw?.message?.content || "Sin respuesta.";
+        chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+        autoAddRespuesta(respuesta);
+      } catch (e) {
+        chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
+        console.error(e);
+      }
+    }
+
+    const logKey  = "terapiaLog";
+    const logBtn  = document.getElementById("openLog");
+    const closeBtn= document.getElementById("closeLog");
+    const panel   = document.getElementById("logPanel");
+    const listDiv = document.getElementById("logList");
+    const inputLog= document.getElementById("logInput");
+    const saveBtn = document.getElementById("saveLog");
+
+    logBtn.onclick   = () => panel.classList.toggle("translate-x-full");
+    closeBtn.onclick = () => panel.classList.add("translate-x-full");
+
+    function loadLog() {
+      listDiv.innerHTML = "";
+      const data = JSON.parse(localStorage.getItem(logKey) || "[]");
+      if (!data.length) {
+        listDiv.innerHTML = "<p class='text-gray-500'>Sin entradas aún…</p>";
+        return;
+      }
+      data.forEach(e => {
+        listDiv.innerHTML += `
+          <details class="border rounded p-2 dark:border-gray-600">
+            <summary class="cursor-pointer font-medium">${e.date}</summary>
+            <p class="mt-1 whitespace-pre-wrap">${e.text}</p>
+          </details>`;
+      });
+    }
+
+    function addEntry(text) {
+      const data = JSON.parse(localStorage.getItem(logKey) || "[]");
+      data.unshift({ date: new Date().toLocaleString(), text });
+      localStorage.setItem(logKey, JSON.stringify(data));
+      loadLog();
+    }
+
+    saveBtn.onclick = () => {
+      const txt = inputLog.value.trim();
+      if (!txt) return;
+      addEntry(txt);
+      inputLog.value = "";
+    };
+
+    panel.addEventListener("transitionend", () => {
+      if (!panel.classList.contains("translate-x-full")) loadLog();
+    });
+
+    function autoAddRespuesta(texto) {
+      const data = JSON.parse(localStorage.getItem(logKey) || "[]");
+      data.unshift({ date: new Date().toLocaleString(), text: `💬 Respuesta del terapeuta:
+${texto}` });
+      localStorage.setItem(logKey, JSON.stringify(data));
+    }
+  </script>
+
+  <a href="/" class="fixed bottom-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold px-4 py-2 rounded-full shadow-lg">🏠 Inicio</a>
 </body>
 </html>
