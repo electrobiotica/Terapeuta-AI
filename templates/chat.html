@@ -38,6 +38,35 @@
     <div class="p-4 border-t dark:border-gray-700">
       <textarea id="logInput" rows="3" placeholder="Escribí tu reflexión…" class="w-full p-2 border rounded dark:bg-gray-900 dark:border-gray-600"></textarea>
       <button id="saveLog" class="mt-2 w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded">Guardar</button>
+
+<button id="exportLog" class="mt-2 w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded">📄 Exportar PDF</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  document.getElementById("exportLog").onclick = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const logs = JSON.parse(localStorage.getItem("terapiaLog") || "[]");
+
+    if (!logs.length) return alert("No hay entradas para exportar.");
+
+    doc.setFontSize(12);
+    let y = 10;
+    logs.forEach(e => {
+      doc.text(`📅 ${e.date}`, 10, y);
+      y += 6;
+      const lines = doc.splitTextToSize(e.text, 180);
+      doc.text(lines, 10, y);
+      y += lines.length * 6 + 4;
+      if (y > 270) {
+        doc.addPage();
+        y = 10;
+      }
+    });
+
+    doc.save("bitacora_emocional.pdf");
+  };
+</script>
+
     </div>
   </div>
 
@@ -155,5 +184,8 @@
     localStorage.setItem(logKey, JSON.stringify(data));
   }
 </script>
+
+<a href="/" class="fixed bottom-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold px-4 py-2 rounded-full shadow-lg">🏠 Inicio</a>
+
 </body>
 </html>
