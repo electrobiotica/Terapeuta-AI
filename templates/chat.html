@@ -39,33 +39,7 @@
     </div>
   </div>
 
-  <script>
-    const page = document.getElementById("page");
-    const chatBox = document.getElementById("chat");
-
-    // Cargar preferencia guardada
-    const dark = localStorage.getItem("darkMode") === "true";
-    if (dark) {
-      page.classList.add("dark-mode");
-      chatBox.classList.add("dark-chat");
-    }
-
-    function toggleModo() {
-      const isDark = page.classList.toggle("dark-mode");
-      chatBox.classList.toggle("dark-chat", isDark);
-      localStorage.setItem("darkMode", isDark);
-    }
-
-    const chatDiv = document.getElementById("chat");
-    const tipo = "{{ tipo }}";
-
-    const prompts = {
-      humanista: "Actuá como un terapeuta humanista...",
-      jung: "Actuá como un terapeuta jungiano...",
-      freud: "Actuá como un terapeuta psicoanalítico...",
-      gestalt: "Actuá como un terapeuta Gestalt..."
-    };
-<script>
+ <script>
   /* ---------- login Puter primera vez ---------- */
   document.addEventListener("DOMContentLoaded", () => {
     if (!localStorage.getItem("puterInit")) {
@@ -77,45 +51,69 @@
       window.open("https://puter.com", "_blank");
       localStorage.setItem("puterInit", "ok");
     }
+
+    /* Restaurar modo oscuro */
+    const dark = localStorage.getItem("darkMode") === "true";
+    if (dark) {
+      page.classList.add("dark-mode");
+      chatBox.classList.add("dark-chat");
+    }
   });
 
-  /* …aquí sigue tu función enviarMensaje() y el resto del script … */
+  /* ---------- modo oscuro ---------- */
+  function toggleModo() {
+    const isDark = page.classList.toggle("dark-mode");
+    chatBox.classList.toggle("dark-chat", isDark);
+    localStorage.setItem("darkMode", isDark);
+  }
+
+  /* ---------- datos de página ---------- */
+  const page   = document.getElementById("page");
+  const chatBox= document.getElementById("chat");
+  const chatDiv= document.getElementById("chat");
+  const tipo   = "{{ tipo }}" || "humanista";
+
+  const prompts = {
+    humanista: "Actuá como un terapeuta humanista...",
+    jung:      "Actuá como un terapeuta jungiano...",
+    freud:     "Actuá como un terapeuta psicoanalítico...",
+    gestalt:   "Actuá como un terapeuta Gestalt..."
+  };
+
+  /* ---------- enviar mensaje ---------- */
+  async function enviarMensaje() {
+    const input = document.getElementById("mensaje");
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
+    chatDiv.scrollTop  = chatDiv.scrollHeight;
+    input.value = "";
+
+    try {
+      /* esperar a que puter.js esté listo */
+      await new Promise(res => {
+        const wait = () => (window.puter && puter.ai?.chat) ? res() : setTimeout(wait, 50);
+        wait();
+      });
+
+      const raw = await puter.ai.chat(
+        [
+          { role: "system", content: prompts[tipo] || prompts.humanista },
+          { role: "user",   content: texto }
+        ],
+        { model: "gpt-4o" }
+      );
+
+      const respuesta = raw?.message?.content || "Sin respuesta.";
+      chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
+      chatDiv.scrollTop  = chatDiv.scrollHeight;
+    } catch (e) {
+      chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
+      console.error(e);
+    }
+  }
 </script>
 
-    async function enviarMensaje() {
-  const input = document.getElementById("mensaje");
-  const texto = input.value.trim();
-  if (!texto) return;
-
-  chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
-  chatDiv.scrollTop = chatDiv.scrollHeight;
-  input.value = "";
-
-  try {
-    // ✅ Espera activa hasta que puter esté disponible
-    await new Promise(resolve => {
-      const check = () => {
-        if (window.puter && puter.ai && puter.ai.chat) return resolve();
-        setTimeout(check, 50);
-      };
-      check();
-    });
-
-    const raw = await puter.ai.chat([
-      { role: "system", content: prompts[tipo] || prompts["humanista"] },
-      { role: "user", content: texto }
-    ], { model: "gpt-4o" });
-
-    const respuesta = raw?.message?.content || "Sin respuesta.";
-    chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
-    chatDiv.scrollTop = chatDiv.scrollHeight;
-  } catch (e) {
-    chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
-    console.error(e);
-  }
-}
-
-  
-  </script>
 </body>
 </html>
