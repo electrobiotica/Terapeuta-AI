@@ -25,6 +25,52 @@
       <input type="text" id="mensaje" placeholder="Escribí algo..." class="flex-1 border rounded px-3 py-2 text-black text-sm sm:text-base" />
       <button onclick="enviarMensaje()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded text-sm sm:text-base">Enviar</button>
     </div>
+
+<!-- Entrada de voz -->
+<div class="flex gap-2 mt-3">
+  <button onclick="escucharMicrofono()" class="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-2 rounded text-sm sm:text-base">🎙️ Hablar</button>
+  <button onclick="toggleVoz()" id="toggleVozBtn" class="bg-gray-300 hover:bg-gray-400 text-black px-3 py-2 rounded text-sm sm:text-base">🔊 Voz: OFF</button>
+</div>
+
+<script>
+  // Reconocimiento de voz
+  function escucharMicrofono() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "es-AR";
+    recognition.start();
+    recognition.onresult = (event) => {
+      const texto = event.results[0][0].transcript;
+      document.getElementById("mensaje").value = texto;
+    };
+    recognition.onerror = (event) => {
+      alert("🎤 Error al activar el micrófono. Probá usar Chrome o Edge.");
+      console.error(event);
+    };
+  }
+
+  // Voz hablada (Text-to-Speech)
+  let vozActiva = localStorage.getItem("vozHablada") === "true";
+
+  function toggleVoz() {
+    vozActiva = !vozActiva;
+    localStorage.setItem("vozHablada", vozActiva);
+    document.getElementById("toggleVozBtn").innerText = vozActiva ? "🔊 Voz: ON" : "🔇 Voz: OFF";
+  }
+
+  function leerTexto(texto) {
+    if (!vozActiva) return;
+    const utter = new SpeechSynthesisUtterance(texto);
+    utter.lang = "es-AR";
+    speechSynthesis.speak(utter);
+  }
+
+  // Restaurar estado al cargar
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("toggleVozBtn").innerText = vozActiva ? "🔊 Voz: ON" : "🔇 Voz: OFF";
+  });
+</script>
+
+    
   </div>
 
   <button id="openLog" class="fixed bottom-4 right-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-semibold px-4 py-2 rounded-full shadow-lg">📝 Bitácora</button>
