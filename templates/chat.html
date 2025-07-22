@@ -27,15 +27,23 @@
     </div>
 
 
-<!-- Entrada de voz mejorada con stop y control de errores -->
-<div class="flex gap-2 mt-3">
-  <button onclick="escucharMicrofono()" class="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-2 rounded text-sm sm:text-base">🎙️ Hablar</button>
+
+<!-- Entrada de voz con estado -->
+<div class="flex gap-2 mt-3 items-center">
+  <button onclick="escucharMicrofono()" id="micButton" class="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-2 rounded text-sm sm:text-base">🎙️ Hablar</button>
   <button onclick="toggleVoz()" id="toggleVozBtn" class="bg-gray-300 hover:bg-gray-400 text-black px-3 py-2 rounded text-sm sm:text-base">🔊 Voz: OFF</button>
+  <span id="micStatus" class="text-sm ml-2 text-gray-500"></span>
 </div>
+
+<!-- Indicador de escritura del terapeuta -->
+<div id="typing" class="text-sm text-gray-500 italic mt-4 hidden">✍️ El terapeuta está escribiendo…</div>
 
 <script>
   let reconocimiento;
   let vozActiva = localStorage.getItem("vozHablada") === "true";
+  const micBtn = document.getElementById("micButton");
+  const micStatus = document.getElementById("micStatus");
+  const typingDiv = document.getElementById("typing");
 
   function toggleVoz() {
     vozActiva = !vozActiva;
@@ -62,6 +70,12 @@
     reconocimiento.interimResults = false;
     reconocimiento.maxAlternatives = 1;
 
+    reconocimiento.onstart = () => {
+      micStatus.textContent = "🟢 Escuchando...";
+      micBtn.disabled = true;
+      micBtn.classList.add("opacity-50");
+    };
+
     reconocimiento.onresult = (event) => {
       const texto = event.results[0][0].transcript;
       document.getElementById("mensaje").value = texto;
@@ -73,16 +87,25 @@
     };
 
     reconocimiento.onend = () => {
-      // Micrófono cerrado automáticamente
+      micStatus.textContent = "";
+      micBtn.disabled = false;
+      micBtn.classList.remove("opacity-50");
     };
 
     reconocimiento.start();
   }
 
+  // Función para mostrar y ocultar animación "escribiendo"
+  function mostrarTyping(show) {
+    typingDiv.classList.toggle("hidden", !show);
+  }
+
+  // Restaurar botón de voz al cargar
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("toggleVozBtn").innerText = vozActiva ? "🔊 Voz: ON" : "🔇 Voz: OFF";
   });
 </script>
+
 
 
     
