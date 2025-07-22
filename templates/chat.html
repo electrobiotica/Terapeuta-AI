@@ -67,27 +67,38 @@
     };
 
     async function enviarMensaje() {
-      const input = document.getElementById("mensaje");
-      const texto = input.value.trim();
-      if (!texto) return;
+  const input = document.getElementById("mensaje");
+  const texto = input.value.trim();
+  if (!texto) return;
 
-      chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
-      chatDiv.scrollTop = chatDiv.scrollHeight;
-      input.value = "";
+  chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+  input.value = "";
 
-      try {
-        const raw = await puter.ai.chat([
-          { role: "system", content: prompts[tipo] || prompts["humanista"] },
-          { role: "user", content: texto }
-        ], { model: "gpt-4o" });
+  try {
+    // ✅ Espera activa hasta que puter esté disponible
+    await new Promise(resolve => {
+      const check = () => {
+        if (window.puter && puter.ai && puter.ai.chat) return resolve();
+        setTimeout(check, 50);
+      };
+      check();
+    });
 
-        const respuesta = raw?.message?.content || "Sin respuesta.";
-        chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-      } catch (e) {
-        chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
-        console.error(e);
-      }
+    const raw = await puter.ai.chat([
+      { role: "system", content: prompts[tipo] || prompts["humanista"] },
+      { role: "user", content: texto }
+    ], { model: "gpt-4o" });
+
+    const respuesta = raw?.message?.content || "Sin respuesta.";
+    chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+  } catch (e) {
+    chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
+    console.error(e);
+  }
+}
+
     }
   </script>
 </body>
