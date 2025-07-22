@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sesión Terapéutica AI</title>
   <script src="https://js.puter.com/v2/"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -23,16 +24,16 @@
     }
   </style>
 </head>
-<body id="page" class="bg-white text-gray-800 p-6 transition">
-  <div class="max-w-2xl mx-auto">
+<body id="page" class="bg-white text-gray-800 p-4 sm:p-6 transition min-h-screen">
+  <div class="max-w-2xl mx-auto w-full">
     <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">Terapia – {{ tipo|capitalize }}</h1>
+      <h1 class="text-xl sm:text-2xl font-bold">Terapia – {{ tipo|capitalize }}</h1>
       <span onclick="toggleModo()" class="moon-button" title="Cambiar modo">🌗</span>
     </div>
-    <div id="chat" class="space-y-4 mb-8 bg-gray-100 p-4 rounded-md h-96 overflow-y-scroll border transition"></div>
+    <div id="chat" class="space-y-4 mb-6 bg-gray-100 p-3 sm:p-4 rounded-md h-[60vh] overflow-y-scroll border text-sm sm:text-base transition"></div>
     <div class="flex gap-2">
-      <input type="text" id="mensaje" placeholder="Escribí algo..." class="flex-1 border rounded px-4 py-2 text-black" />
-      <button onclick="enviarMensaje()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">
+      <input type="text" id="mensaje" placeholder="Escribí algo..." class="flex-1 border rounded px-3 py-2 text-black text-sm sm:text-base" />
+      <button onclick="enviarMensaje()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded text-sm sm:text-base">
         Enviar
       </button>
     </div>

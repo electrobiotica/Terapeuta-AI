@@ -1,6 +1,4 @@
-import os
 from flask import Flask, render_template, request
-
 app = Flask(__name__)
 
 @app.route("/")
@@ -21,7 +19,4 @@ def privacidad():
     return render_template("privacidad.html")
 
 if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 5000))  # Render asigna dinámicamente este puerto
-    app.run(host="0.0.0.0", port=port)
-
+    app.run(debug=True, host="127.0.0.1", port=5123)
