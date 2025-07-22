@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />e
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sesión Terapéutica AI</title>
   <script src="https://js.puter.com/v2/" defer></script>
@@ -12,85 +12,96 @@
     .dark-chat { background-color: #2d3748; }
     .moon-button { font-size: 1.8rem; cursor: pointer; transition: transform 0.2s ease; }
     .moon-button:hover { transform: scale(1.2); }
-    input:focus, textarea:focus { outline: none; }
+    .hidden { display: none; }
   </style>
 </head>
 <body id="page" class="bg-white text-gray-800 flex flex-col min-h-[100dvh]">
-  <main class="max-w-2xl mx-auto flex flex-col flex-grow w-full p-4">
-    <div class="flex justify-between items-center mb-4">
+  <main class="max-w-2xl mx-auto flex flex-col flex-grow w-full p-4 pt-2">
+
+    <!-- Encabezado -->
+    <div class="flex justify-between items-center mb-2">
       <h1 class="text-xl font-bold">Terapia – {{ tipo|capitalize }}</h1>
-      <div class="flex gap-4 text-sm">
-        <a href="/" class="underline text-indigo-600">🏠 Inicio</a>
-        <a href="#logPanel" class="underline text-amber-600">📝 Bitácora</a>
-      </div>
+      <span onclick="toggleModo()" class="moon-button" title="Cambiar modo">🌗</span>
     </div>
 
-    <div id="chat" class="flex-grow overflow-y-auto bg-gray-100 p-3 rounded-md border text-sm sm:text-base transition mb-3"></div>
-
-    <div id="vozManual" class="hidden mb-2">
-      <button onclick="leerTexto(respuestaGlobal)" class="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded text-sm">🔊 Escuchar respuesta</button>
+    <!-- Selector de modo -->
+    <div class="flex justify-center gap-2 mb-3 text-sm">
+      <button onclick="setModo('escrito')" id="modoEscrito" class="bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded">⌨️ Escrito</button>
+      <button onclick="setModo('voz')" id="modoVoz" class="bg-gray-200 text-black px-3 py-1 rounded">🎤 Conversación</button>
     </div>
 
+    <!-- Contenedor de mensajes -->
+    <div id="chat" class="flex-grow overflow-y-auto bg-gray-100 p-3 rounded-md border text-sm transition mb-3"></div>
+
+    <!-- Indicador de escritura -->
+    <div id="typing" class="text-sm text-gray-500 italic hidden mb-2">✍️ El terapeuta está escribiendo…</div>
+
+    <!-- Entrada -->
     <div class="flex items-center gap-2 mb-2">
-      <input type="text" id="mensaje" placeholder="Escribí algo..." class="flex-1 border rounded px-3 py-2 text-black text-sm sm:text-base" />
-      <button onclick="enviarMensaje()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded text-sm sm:text-base">Enviar</button>
+      <input type="text" id="mensaje" placeholder="Escribí algo..." class="flex-1 border rounded px-3 py-2 text-black text-sm" />
+      <button onclick="enviarMensaje()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded text-sm">Enviar</button>
     </div>
 
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <!-- Funcionalidades adicionales -->
+    <div class="flex justify-between items-center gap-2 mb-3 flex-wrap">
       <button onclick="escucharMicrofono()" id="micButton" class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded text-sm flex-1">🎙️ Hablar</button>
+      <button onclick="toggleVoz()" id="toggleVozBtn" class="bg-gray-300 text-black px-4 py-2 rounded text-sm flex-1">🔊 Voz: OFF</button>
     </div>
 
-    <div id="typing" class="text-sm text-gray-500 italic hidden mb-3">✍️ El terapeuta está escribiendo…</div>
+    <button id="escucharRespuestaBtn" onclick="reproducirUltima()" class="hidden bg-gray-200 hover:bg-gray-300 text-black py-2 px-4 rounded mb-3 text-sm w-full">🔊 Escuchar respuesta</button>
+
+    <!-- Navegación -->
+    <div class="flex justify-around gap-4 mt-auto">
+      <a href="/" class="bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold px-4 py-2 rounded-full shadow text-sm">🏠 Inicio</a>
+      <button onclick="abrirBitacora()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-semibold px-4 py-2 rounded-full shadow text-sm">📝 Bitácora</button>
+    </div>
   </main>
 
+  <!-- Panel lateral oculto para bitácora -->
+  <div id="logPanel" class="fixed top-0 right-0 w-80 max-w-full h-full bg-white shadow-xl transform translate-x-full transition-transform duration-300 z-50 flex flex-col">
+    <div class="flex justify-between items-center p-4 border-b">
+      <h2 class="text-lg font-semibold">Bitácora emocional</h2>
+      <button onclick="cerrarBitacora()" class="text-xl leading-none">&times;</button>
+    </div>
+    <div id="logList" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm"></div>
+    <div class="p-4 border-t">
+      <textarea id="logInput" rows="3" placeholder="Escribí tu reflexión…" class="w-full p-2 border rounded"></textarea>
+      <button onclick="guardarEntrada()" class="mt-2 w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded">Guardar</button>
+    </div>
+  </div>
+
   <script>
-    const micBtn = document.getElementById("micButton");
-    const typingDiv = document.getElementById("typing");
+    let vozActiva = false;
+    let modo = "escrito";
+    let ultimaRespuesta = "";
+    const toggleBtn = document.getElementById("toggleVozBtn");
     const chatDiv = document.getElementById("chat");
+    const typingDiv = document.getElementById("typing");
 
-    let respuestaGlobal = "";
-    let reconocimiento;
+    document.addEventListener("DOMContentLoaded", () => {
+      toggleBtn.innerText = vozActiva ? "🔊 Voz: ON" : "🔇 Voz: OFF";
+    });
 
-    function leerTexto(texto) {
-      const utter = new SpeechSynthesisUtterance(texto);
-      utter.lang = "es-AR";
-      speechSynthesis.speak(utter);
+    function setModo(nuevoModo) {
+      modo = nuevoModo;
+      document.getElementById("modoEscrito").classList.toggle("bg-gray-300", modo === "escrito");
+      document.getElementById("modoVoz").classList.toggle("bg-gray-300", modo === "voz");
+    }
+
+    function toggleVoz() {
+      vozActiva = !vozActiva;
+      toggleBtn.innerText = vozActiva ? "🔊 Voz: ON" : "🔇 Voz: OFF";
     }
 
     function mostrarTyping(show) {
       typingDiv.classList.toggle("hidden", !show);
     }
 
-    function escucharMicrofono() {
-      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-        alert("🎤 Tu navegador no soporta reconocimiento de voz. Usá Chrome o Edge.");
-        return;
-      }
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      reconocimiento = new SpeechRecognition();
-      reconocimiento.lang = "es-AR";
-      reconocimiento.interimResults = false;
-      reconocimiento.maxAlternatives = 1;
-
-      reconocimiento.onstart = () => {
-        micBtn.disabled = true;
-      };
-
-      reconocimiento.onresult = (event) => {
-        const texto = event.results[0][0].transcript;
-        document.getElementById("mensaje").value = texto;
-      };
-
-      reconocimiento.onerror = (event) => {
-        alert("🎤 Error al activar el micrófono.");
-        console.error(event);
-      };
-
-      reconocimiento.onend = () => {
-        micBtn.disabled = false;
-      };
-
-      reconocimiento.start();
+    function reproducirUltima() {
+      if (!ultimaRespuesta) return;
+      const utter = new SpeechSynthesisUtterance(ultimaRespuesta);
+      utter.lang = "es-AR";
+      speechSynthesis.speak(utter);
     }
 
     async function enviarMensaje() {
@@ -101,34 +112,87 @@
       chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
       chatDiv.scrollTop = chatDiv.scrollHeight;
       input.value = "";
-
       mostrarTyping(true);
 
-      try {
-        await new Promise(res => {
-          const wait = () => (window.puter && puter.ai?.chat) ? res() : setTimeout(wait, 50);
-          wait();
-        });
+      await new Promise(res => {
+        const wait = () => (window.puter && puter.ai?.chat) ? res() : setTimeout(wait, 50);
+        wait();
+      });
 
-        const tipo = "freud"; // cambiar según contexto
+      const tipo = "freud";
+      const raw = await puter.ai.chat([
+        { role: "system", content: "Actuá como un terapeuta " + tipo + "." },
+        { role: "user", content: texto }
+      ], { model: "gpt-4o" });
 
-        const raw = await puter.ai.chat([
-          { role: "system", content: "Actuá como un terapeuta " + tipo + "." },
-          { role: "user", content: texto }
-        ], { model: "gpt-4o" });
+      const respuesta = raw?.message?.content || "Sin respuesta.";
+      ultimaRespuesta = respuesta;
+      mostrarTyping(false);
+      document.getElementById("escucharRespuestaBtn").classList.remove("hidden");
 
-        const respuesta = raw?.message?.content || "Sin respuesta.";
-        mostrarTyping(false);
-        chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
-        chatDiv.scrollTop = chatDiv.scrollHeight;
+      chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
+      chatDiv.scrollTop = chatDiv.scrollHeight;
 
-        respuestaGlobal = respuesta;
-        document.getElementById("vozManual").classList.remove("hidden");
-      } catch (e) {
-        mostrarTyping(false);
-        chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
-        console.error(e);
+      if (vozActiva || modo === "voz") {
+        reproducirUltima();
       }
+    }
+
+    function escucharMicrofono() {
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert("🎤 Tu navegador no soporta reconocimiento de voz. Usá Chrome o Edge.");
+        return;
+      }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const reconocimiento = new SpeechRecognition();
+      reconocimiento.lang = "es-AR";
+      reconocimiento.interimResults = false;
+      reconocimiento.maxAlternatives = 1;
+
+      reconocimiento.onresult = (event) => {
+        const texto = event.results[0][0].transcript;
+        document.getElementById("mensaje").value = texto;
+        if (modo === "voz") enviarMensaje();
+      };
+
+      reconocimiento.onerror = (event) => {
+        alert("🎤 Error al activar el micrófono.");
+        console.error(event);
+      };
+
+      reconocimiento.start();
+    }
+
+    function abrirBitacora() {
+      document.getElementById("logPanel").classList.remove("translate-x-full");
+      cargarBitacora();
+    }
+
+    function cerrarBitacora() {
+      document.getElementById("logPanel").classList.add("translate-x-full");
+    }
+
+    function guardarEntrada() {
+      const input = document.getElementById("logInput").value.trim();
+      if (!input) return;
+      const entradas = JSON.parse(localStorage.getItem("terapiaLog") || "[]");
+      entradas.unshift({ date: new Date().toLocaleString(), text: input });
+      localStorage.setItem("terapiaLog", JSON.stringify(entradas));
+      document.getElementById("logInput").value = "";
+      cargarBitacora();
+    }
+
+    function cargarBitacora() {
+      const data = JSON.parse(localStorage.getItem("terapiaLog") || "[]");
+      const lista = document.getElementById("logList");
+      lista.innerHTML = data.length === 0 ? "<p class='text-gray-500'>Sin entradas aún…</p>" : "";
+      data.forEach(e => {
+        lista.innerHTML += `
+          <details class="border rounded p-2">
+            <summary class="cursor-pointer font-medium">${e.date}</summary>
+            <p class="mt-1 whitespace-pre-wrap">${e.text}</p>
+          </details>`;
+      });
     }
 
     function toggleModo() {
