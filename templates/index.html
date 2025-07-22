@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tu Terapia AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-b from-purple-100 to-indigo-50 min-h-screen flex flex-col items-center justify-center text-gray-800">
+  <section class="text-center p-6 max-w-md">
+    <h1 class="text-4xl font-bold mb-4">Tu Terapia AI</h1>
+    <p class="mb-6 text-lg">Elegí el enfoque terapéutico que mejor se adapte a vos.</p>
+  </section>
+  <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 max-w-3xl">
+    <a href="/chat?terapia=humanista" class="bg-white rounded-2xl shadow-md p-4 hover:ring-2 ring-indigo-400 cursor-pointer">
+      <h2 class="text-xl font-semibold">🌱 Humanista</h2>
+      <p class="text-sm mt-1">Empatía, escucha y autoexploración.</p>
+    </a>
+    <a href="/chat?terapia=jung" class="bg-white rounded-2xl shadow-md p-4 hover:ring-2 ring-indigo-400 cursor-pointer">
+      <h2 class="text-xl font-semibold">🌌 Jungiana</h2>
+      <p class="text-sm mt-1">Arquetipos, símbolos y sueños.</p>
+    </a>
+    <a href="/chat?terapia=freud" class="bg-white rounded-2xl shadow-md p-4 hover:ring-2 ring-indigo-400 cursor-pointer">
+      <h2 class="text-xl font-semibold">🧠 Psicoanalítica</h2>
+      <p class="text-sm mt-1">Inconsciente, deseos y conflictos internos.</p>
+    </a>
+    <a href="/chat?terapia=gestalt" class="bg-white rounded-2xl shadow-md p-4 hover:ring-2 ring-indigo-400 cursor-pointer">
+      <h2 class="text-xl font-semibold">🌀 Gestalt</h2>
+      <p class="text-sm mt-1">Conciencia del presente y cuerpo.</p>
+    </a>
+  </section>
+  <footer class="text-center text-xs text-gray-500 mt-8 p-4 space-y-2">
+    <p>Esta app no reemplaza la atención profesional. 
+      <a href="/terminos" class="underline">Términos</a> · 
+      <a href="/privacidad" class="underline">Privacidad</a>
+    </p>
+    <p>Desarrollado con 🤍 por <a href="https://marianobiotico.pages.dev" target="_blank" class="underline text-indigo-600">Mariano Biotico</a></p>
+    <div class="flex justify-center">
+      <a href="https://www.buymeacoffee.com/marianobiotico" target="_blank">
+        <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" style="height: 42px;" />
+      </a>
+    </div>
+  </footer>
+</body>
+</html>

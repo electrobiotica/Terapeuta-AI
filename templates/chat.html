@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sesión Terapéutica AI</title>
+  <script src="https://js.puter.com/v2/"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .dark-mode {
+      background-color: #1a202c;
+      color: #f7fafc;
+    }
+    .dark-chat {
+      background-color: #2d3748;
+    }
+    .moon-button {
+      font-size: 1.8rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .moon-button:hover {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body id="page" class="bg-white text-gray-800 p-6 transition">
+  <div class="max-w-2xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Terapia – {{ tipo|capitalize }}</h1>
+      <span onclick="toggleModo()" class="moon-button" title="Cambiar modo">🌗</span>
+    </div>
+    <div id="chat" class="space-y-4 mb-8 bg-gray-100 p-4 rounded-md h-96 overflow-y-scroll border transition"></div>
+    <div class="flex gap-2">
+      <input type="text" id="mensaje" placeholder="Escribí algo..." class="flex-1 border rounded px-4 py-2 text-black" />
+      <button onclick="enviarMensaje()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded">
+        Enviar
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const page = document.getElementById("page");
+    const chatBox = document.getElementById("chat");
+
+    // Cargar preferencia guardada
+    const dark = localStorage.getItem("darkMode") === "true";
+    if (dark) {
+      page.classList.add("dark-mode");
+      chatBox.classList.add("dark-chat");
+    }
+
+    function toggleModo() {
+      const isDark = page.classList.toggle("dark-mode");
+      chatBox.classList.toggle("dark-chat", isDark);
+      localStorage.setItem("darkMode", isDark);
+    }
+
+    const chatDiv = document.getElementById("chat");
+    const tipo = "{{ tipo }}";
+
+    const prompts = {
+      humanista: "Actuá como un terapeuta humanista...",
+      jung: "Actuá como un terapeuta jungiano...",
+      freud: "Actuá como un terapeuta psicoanalítico...",
+      gestalt: "Actuá como un terapeuta Gestalt..."
+    };
+
+    async function enviarMensaje() {
+      const input = document.getElementById("mensaje");
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+      input.value = "";
+
+      try {
+        const raw = await puter.ai.chat([
+          { role: "system", content: prompts[tipo] || prompts["humanista"] },
+          { role: "user", content: texto }
+        ], { model: "gpt-4o" });
+
+        const respuesta = raw?.message?.content || "Sin respuesta.";
+        chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      } catch (e) {
+        chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
+        console.error(e);
+      }
+    }
+  </script>
+</body>
+</html>
