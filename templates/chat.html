@@ -211,34 +211,42 @@
     }
 
     async function enviarMensaje() {
-      const input = document.getElementById("mensaje");
-      const texto = input.value.trim();
-      if (!texto) return;
+  const input = document.getElementById("mensaje");
+  const texto = input.value.trim();
+  if (!texto) return;
 
-      chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
-      chatDiv.scrollTop = chatDiv.scrollHeight;
-      input.value = "";
+  chatDiv.innerHTML += `<div><strong>Vos:</strong> ${texto}</div>`;
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+  input.value = "";
 
-      try {
-        await new Promise(res => {
-          const wait = () => (window.puter && puter.ai?.chat) ? res() : setTimeout(wait, 50);
-          wait();
-        });
+  mostrarTyping(true); // ✍️ mostrar animación
 
-        const raw = await puter.ai.chat([
-          { role: "system", content: prompts[tipo] || prompts.humanista },
-          { role: "user", content: texto }
-        ], { model: "gpt-4o" });
+  try {
+    await new Promise(res => {
+      const wait = () => (window.puter && puter.ai?.chat) ? res() : setTimeout(wait, 50);
+      wait();
+    });
 
-        const respuesta = raw?.message?.content || "Sin respuesta.";
-        chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-        autoAddRespuesta(respuesta);
-      } catch (e) {
-        chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
-        console.error(e);
-      }
-    }
+    const raw = await puter.ai.chat([
+      { role: "system", content: prompts[tipo] || prompts.humanista },
+      { role: "user", content: texto }
+    ], { model: "gpt-4o" });
+
+    const respuesta = raw?.message?.content || "Sin respuesta.";
+
+    mostrarTyping(false); // 🛑 ocultar animación
+    chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+
+    autoAddRespuesta(respuesta);
+    leerTexto(respuesta); // 🔊 leer en voz alta
+  } catch (e) {
+    mostrarTyping(false);
+    chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
+    console.error(e);
+  }
+}
+
 
     const logKey  = "terapiaLog";
     const logBtn  = document.getElementById("openLog");
