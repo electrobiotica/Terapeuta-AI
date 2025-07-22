@@ -26,29 +26,15 @@
       <button onclick="enviarMensaje()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded text-sm sm:text-base">Enviar</button>
     </div>
 
-<!-- Entrada de voz -->
+
+<!-- Entrada de voz mejorada con stop y control de errores -->
 <div class="flex gap-2 mt-3">
   <button onclick="escucharMicrofono()" class="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-2 rounded text-sm sm:text-base">🎙️ Hablar</button>
   <button onclick="toggleVoz()" id="toggleVozBtn" class="bg-gray-300 hover:bg-gray-400 text-black px-3 py-2 rounded text-sm sm:text-base">🔊 Voz: OFF</button>
 </div>
 
 <script>
-  // Reconocimiento de voz
-  function escucharMicrofono() {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "es-AR";
-    recognition.start();
-    recognition.onresult = (event) => {
-      const texto = event.results[0][0].transcript;
-      document.getElementById("mensaje").value = texto;
-    };
-    recognition.onerror = (event) => {
-      alert("🎤 Error al activar el micrófono. Probá usar Chrome o Edge.");
-      console.error(event);
-    };
-  }
-
-  // Voz hablada (Text-to-Speech)
+  let reconocimiento;
   let vozActiva = localStorage.getItem("vozHablada") === "true";
 
   function toggleVoz() {
@@ -64,11 +50,40 @@
     speechSynthesis.speak(utter);
   }
 
-  // Restaurar estado al cargar
+  function escucharMicrofono() {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert("🎤 Tu navegador no soporta reconocimiento de voz. Probá con Chrome.");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    reconocimiento = new SpeechRecognition();
+    reconocimiento.lang = "es-AR";
+    reconocimiento.interimResults = false;
+    reconocimiento.maxAlternatives = 1;
+
+    reconocimiento.onresult = (event) => {
+      const texto = event.results[0][0].transcript;
+      document.getElementById("mensaje").value = texto;
+    };
+
+    reconocimiento.onerror = (event) => {
+      alert("🎤 Error al activar el micrófono. Probá usar Chrome o Edge.");
+      console.error(event);
+    };
+
+    reconocimiento.onend = () => {
+      // Micrófono cerrado automáticamente
+    };
+
+    reconocimiento.start();
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("toggleVozBtn").innerText = vozActiva ? "🔊 Voz: ON" : "🔇 Voz: OFF";
   });
 </script>
+
 
     
   </div>
