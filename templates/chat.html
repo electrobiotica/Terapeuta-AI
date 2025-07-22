@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8" />e
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sesión Terapéutica AI</title>
   <script src="https://js.puter.com/v2/" defer></script>
@@ -18,11 +18,18 @@
 <body id="page" class="bg-white text-gray-800 flex flex-col min-h-[100dvh]">
   <main class="max-w-2xl mx-auto flex flex-col flex-grow w-full p-4">
     <div class="flex justify-between items-center mb-4">
-      <h1 class="text-xl sm:text-2xl font-bold">Terapia – {{ tipo|capitalize }}</h1>
-      <span onclick="toggleModo()" class="moon-button" title="Cambiar modo">🌗</span>
+      <h1 class="text-xl font-bold">Terapia – {{ tipo|capitalize }}</h1>
+      <div class="flex gap-4 text-sm">
+        <a href="/" class="underline text-indigo-600">🏠 Inicio</a>
+        <a href="#logPanel" class="underline text-amber-600">📝 Bitácora</a>
+      </div>
     </div>
 
     <div id="chat" class="flex-grow overflow-y-auto bg-gray-100 p-3 rounded-md border text-sm sm:text-base transition mb-3"></div>
+
+    <div id="vozManual" class="hidden mb-2">
+      <button onclick="leerTexto(respuestaGlobal)" class="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded text-sm">🔊 Escuchar respuesta</button>
+    </div>
 
     <div class="flex items-center gap-2 mb-2">
       <input type="text" id="mensaje" placeholder="Escribí algo..." class="flex-1 border rounded px-3 py-2 text-black text-sm sm:text-base" />
@@ -31,35 +38,20 @@
 
     <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
       <button onclick="escucharMicrofono()" id="micButton" class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded text-sm flex-1">🎙️ Hablar</button>
-      <button onclick="toggleVoz()" id="toggleVozBtn" class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded text-sm flex-1">🔊 Voz: OFF</button>
     </div>
 
     <div id="typing" class="text-sm text-gray-500 italic hidden mb-3">✍️ El terapeuta está escribiendo…</div>
-
-    <div class="flex justify-around gap-4 mb-2">
-      <a href="/" class="bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold px-4 py-2 rounded-full shadow text-sm">🏠 Inicio</a>
-      <a href="#logPanel" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-semibold px-4 py-2 rounded-full shadow text-sm">📝 Bitácora</a>
-    </div>
   </main>
 
   <script>
     const micBtn = document.getElementById("micButton");
-    const micStatus = document.getElementById("micStatus");
-    const toggleBtn = document.getElementById("toggleVozBtn");
     const typingDiv = document.getElementById("typing");
     const chatDiv = document.getElementById("chat");
 
-    let vozActiva = localStorage.getItem("vozHablada") === "true";
+    let respuestaGlobal = "";
     let reconocimiento;
 
-    function toggleVoz() {
-      vozActiva = !vozActiva;
-      localStorage.setItem("vozHablada", vozActiva);
-      toggleBtn.innerText = vozActiva ? "🔊 Voz: ON" : "🔇 Voz: OFF";
-    }
-
     function leerTexto(texto) {
-      if (!vozActiva) return;
       const utter = new SpeechSynthesisUtterance(texto);
       utter.lang = "es-AR";
       speechSynthesis.speak(utter);
@@ -130,17 +122,14 @@
         chatDiv.innerHTML += `<div><strong>Terapeuta:</strong> ${respuesta}</div>`;
         chatDiv.scrollTop = chatDiv.scrollHeight;
 
-        leerTexto(respuesta);
+        respuestaGlobal = respuesta;
+        document.getElementById("vozManual").classList.remove("hidden");
       } catch (e) {
         mostrarTyping(false);
         chatDiv.innerHTML += `<div style="color:red;">❌ Error al contactar con el modelo.</div>`;
         console.error(e);
       }
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      toggleBtn.innerText = vozActiva ? "🔊 Voz: ON" : "🔇 Voz: OFF";
-    });
 
     function toggleModo() {
       const page = document.getElementById("page");
