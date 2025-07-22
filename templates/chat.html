@@ -65,6 +65,22 @@
       freud: "Actuá como un terapeuta psicoanalítico...",
       gestalt: "Actuá como un terapeuta Gestalt..."
     };
+<script>
+  /* ---------- login Puter primera vez ---------- */
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!localStorage.getItem("puterInit")) {
+      alert(
+        "🔐 Para activar el chat por primera vez, se abrirá Puter en otra pestaña.\n" +
+        "Iniciá sesión (o simplemente esperá que cargue) y volvé acá.\n" +
+        "¡Solo tendrás que hacerlo una vez!"
+      );
+      window.open("https://puter.com", "_blank");
+      localStorage.setItem("puterInit", "ok");
+    }
+  });
+
+  /* …aquí sigue tu función enviarMensaje() y el resto del script … */
+</script>
 
     async function enviarMensaje() {
   const input = document.getElementById("mensaje");
