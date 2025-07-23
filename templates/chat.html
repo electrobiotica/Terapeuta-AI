@@ -65,16 +65,17 @@
 
   </main>
 
-  <!-- Navegación inferior -->
-  <nav class="bg-white border-t p-2 flex justify-around text-sm text-gray-600">
-    <button onclick="mostrar('chatSection')">🗨 Chat</button>
-    <button onclick="mostrar('bitacoraSection');cargarBitacora();">📝 Bitácora</button>
-    <button onclick="mostrar('estadoSection')">📊 Estado</button>
-    <button onclick="mostrar('ajustesSection')">⚙️ Ajustes</button>
-  </nav>
+ <!-- Navegación inferior fija -->
+<nav class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur border-t
+            flex justify-around text-sm text-gray-700 py-2 shadow-[0_-1px_4px_rgba(0,0,0,0.05)]">
+  <button onclick="mostrar('chatSection')">🗨</button>
+  <button onclick="mostrar('bitacoraSection');cargarBitacora();">📝</button>
+  <button onclick="mostrar('estadoSection')">📊</button>
+  <button onclick="mostrar('ajustesSection')">⚙️</button>
+  <a href="/" title="Inicio">🏠</a>
+</nav>
 
-  <!-- Botón Inicio -->
-  <a href="/" class="fixed bottom-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold px-4 py-2 rounded-full shadow text-sm">🏠 Inicio</a>
+
 
 <script>
   // ---------- Estado UI ----------
